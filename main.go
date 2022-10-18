@@ -4,10 +4,8 @@ import (
 	"net/http"
 	"os"
 	"fmt"
+	"io/ioutil"
 	"io"
-
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 )
 
 
@@ -25,45 +23,61 @@ func main() {
 		httpPort = "8080"
 	}
 
-	// Get the data
-	var client http.Client
-	resp, err := client.Get(ipListUrl)
+	writeIndex()
+	downloadFile("/tmp/ip", ipListUrl)
+	
+	fs := http.FileServer(http.Dir("/tmp/"))
+	http.Handle("/", http.StripPrefix("/", fs))
+
+	err := http.ListenAndServe(":" + httpPort, nil)
 	if err != nil {
-		fmt.Printf("Cant Get IP List via HTTP")
-	}
-	defer resp.Body.Close()
-  
-	var bodyString string
-	if resp.StatusCode == http.StatusOK {
-		bodyBytes, err := io.ReadAll(resp.Body)
-		if err != nil {
-			fmt.Printf("Cant read resp Body")
-		}
-		bodyString = string(bodyBytes)
-		fmt.Printf(bodyString)
+		fmt.Errorf("Webserver startfailed")
 	} else {
-		bodyString = "Something went wrong"
+		fmt.Println("Webserver running on: http://localhost:" + httpPort)
 	}
 
 
-
-	e := echo.New()
-
-	e.Use(middleware.Logger())
-	e.Use(middleware.Recover())
-
-	e.GET("/", func(c echo.Context) error {
-		return c.HTML(http.StatusOK, "Docker FireHOL Mikrotik Converter WEB")
-	})
-
-	e.GET("/healthz", func(c echo.Context) error {
-		return c.JSON(http.StatusOK, struct{ Status string }{Status: "OK"})
-	})
-
-	e.GET("/ip", func(c echo.Context) error {
-		return c.HTML(http.StatusOK, bodyString)
-	})
-
-	e.Logger.Fatal(e.Start(":" + httpPort))
 }
 
+func writeIndex() {
+    val := "Docker FireHOL Mikrotik"
+    data := []byte(val)
+
+    err := ioutil.WriteFile("/tmp/index.html", data, 0)
+	if err != nil {
+		fmt.Println("Index not created")
+	}
+    fmt.Println("Index created")
+}
+
+func downloadFile(filepath string, url string) (err error) {
+
+  // Create the file
+  out, err := os.Create(filepath)
+  if err != nil  {
+    return err
+  }
+  defer out.Close()
+
+  // Get the data
+  resp, err := http.Get(url)
+  if err != nil {
+    return err
+  }
+  defer resp.Body.Close()
+
+  // Check server response
+  if resp.StatusCode != http.StatusOK {
+    return fmt.Errorf("bad status: %s", resp.Status)
+  }
+
+  // Writer the body to file
+  _, err = io.Copy(out, resp.Body)
+  if err != nil  {
+    return err
+  }
+
+  fmt.Println("IPs downloaded")
+
+  return nil
+}
