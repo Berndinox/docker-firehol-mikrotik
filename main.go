@@ -15,9 +15,14 @@ func main() {
     localFileLocation := "ip.txt"
 
 	ipListUrl := os.Getenv("IP_LIST_URL")
-	if ipListUrl = "" {
-        ipListUrl := "https://iplists.firehol.org/files/firehol_level1.netset"
+	if ipListUrl == "" {
+        ipListUrl = "https://iplists.firehol.org/files/firehol_level1.netset"
     }
+
+	httpPort := os.Getenv("HTTP_PORT")
+	if httpPort == "" {
+		httpPort = "8080"
+	}
 
 	downloadFile(localFileLocation, ipListUrl)
 	
@@ -37,11 +42,6 @@ func main() {
 	e.GET("/ip", func(c echo.Context) error {
 		return c.HTML(http.StatusOK, openFile(localFileLocation))
 	})
-
-	httpPort := os.Getenv("HTTP_PORT")
-	if httpPort == "" {
-		httpPort = "8080"
-	}
 
 	e.Logger.Fatal(e.Start(":" + httpPort))
 }
