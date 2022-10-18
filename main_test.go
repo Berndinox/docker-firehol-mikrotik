@@ -32,7 +32,7 @@ func TestRespondsWithLove(t *testing.T) {
 	pool, err := dockertest.NewPool("")
 	require.NoError(t, err, "could not connect to Docker")
 
-	resource, err := pool.Run("docker-firehol-mikrotik", "latest", []string{})
+	resource, err := pool.Run("berndinox/docker-firehol-mikrotik", "latest", []string{})
 	require.NoError(t, err, "could not start container")
 
 	t.Cleanup(func() {

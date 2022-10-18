@@ -3,7 +3,7 @@ Converts the Firehol Level 1 IP-List to an Mikrotik RSC File and makes them avai
 
 **Work in Progrss!**
 
-## docker-gs-ping
+## Source
 Forked from: https://github.com/olliefr/docker-gs-ping
 Kudos for this great Template!
 
