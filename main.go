@@ -3,8 +3,8 @@ package main
 import (
 	"net/http"
 	"os"
-	"io"
 	"fmt"
+	"io"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -12,20 +12,41 @@ import (
 
 
 func main() {
-    localFileLocation := "ip.txt"
 
+	// IP List to Block
 	ipListUrl := os.Getenv("IP_LIST_URL")
 	if ipListUrl == "" {
         ipListUrl = "https://iplists.firehol.org/files/firehol_level1.netset"
     }
 
+	// Port the Service should listen to default 8080
 	httpPort := os.Getenv("HTTP_PORT")
 	if httpPort == "" {
 		httpPort = "8080"
 	}
 
-	downloadFile(localFileLocation, ipListUrl)
-	
+	// Get the data
+	var client http.Client
+	resp, err := client.Get(ipListUrl)
+	if err != nil {
+		fmt.Printf("Cant Get IP List via HTTP")
+	}
+	defer resp.Body.Close()
+  
+	var bodyString string
+	if resp.StatusCode == http.StatusOK {
+		bodyBytes, err := io.ReadAll(resp.Body)
+		if err != nil {
+			fmt.Printf("Cant read resp Body")
+		}
+		bodyString = string(bodyBytes)
+		fmt.Printf(bodyString)
+	} else {
+		bodyString = "Something went wrong"
+	}
+
+
+
 	e := echo.New()
 
 	e.Use(middleware.Logger())
@@ -40,46 +61,9 @@ func main() {
 	})
 
 	e.GET("/ip", func(c echo.Context) error {
-		return c.HTML(http.StatusOK, openFile(localFileLocation))
+		return c.HTML(http.StatusOK, bodyString)
 	})
 
 	e.Logger.Fatal(e.Start(":" + httpPort))
 }
 
-func openFile(filePath string) {
-    body, err := ioutil.ReadFile(filePath)
-    if err != nil {
-        return err
-    }
-    return string(body)
-}
-
-func downloadFile(filePath string, url string) (err error) {
-
-	// Create the file
-	out, err := os.Create(filePath)
-	if err != nil  {
-	  return err
-	}
-	defer out.Close()
-  
-	// Get the data
-	resp, err := http.Get(url)
-	if err != nil {
-	  return err
-	}
-	defer resp.Body.Close()
-  
-	// Check server response
-	if resp.StatusCode != http.StatusOK {
-	  return fmt.Errorf("bad status: %s", resp.Status)
-	}
-  
-	// Writer the body to file
-	_, err = io.Copy(out, resp.Body)
-	if err != nil  {
-	  return err
-	}
-  
-	return nil
-}
