@@ -13,7 +13,7 @@ RUN go mod download
 COPY *.go ./
 
 # Build
-RUN go build -o /docker-gs-ping
+RUN go build -o /docker-firehol-mikrotik
 
 # This is for documentation purposes only.
 # To actually open the port, runtime parameters
