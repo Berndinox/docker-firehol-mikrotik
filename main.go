@@ -3,7 +3,7 @@ package main
 import (
 	"net/http"
 	"os"
-	"io"
+	"io/ioutil"
 	"fmt"
 
 	"github.com/labstack/echo/v4"
