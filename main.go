@@ -3,7 +3,7 @@ package main
 import (
 	"net/http"
 	"os"
-	"io/ioutil"
+	"io"
 	"fmt"
 
 	"github.com/labstack/echo/v4"
@@ -47,7 +47,7 @@ func main() {
 }
 
 func openFile(filePath string) {
-    body, err := iotuil.ReadFile(filePath)
+    body, err := ioutil.ReadFile(filePath)
     if err != nil {
         return err
     }
