@@ -16,7 +16,7 @@ func main() {
 
 	ipListUrl := os.Getenv("IP_LIST_URL")
 	if ipListUrl = "" {
-        ipListUrl = "https://iplists.firehol.org/files/firehol_level1.netset"
+        ipListUrl := "https://iplists.firehol.org/files/firehol_level1.netset"
     }
 
 	downloadFile(localFileLocation, ipListUrl)
@@ -35,7 +35,7 @@ func main() {
 	})
 
 	e.GET("/ip", func(c echo.Context) error {
-		return c.HTML(http.StatusOK, openFile(localFileLocation) })
+		return c.HTML(http.StatusOK, openFile(localFileLocation))
 	})
 
 	httpPort := os.Getenv("HTTP_PORT")
