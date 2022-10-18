@@ -41,9 +41,7 @@ jobs:
           builder: ${{ steps.buildx.outputs.name }}
           push:    false
           load:    true
-          tags: berndinox/docker-firehol-mikrotik:latest
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/${{ github.event.repository.name }}:latest
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to:   type=local,dest=/tmp/.buildx-cache
 
-      - name: Run functional tests
-        run:  go test -v ./...
