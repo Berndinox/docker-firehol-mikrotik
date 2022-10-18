@@ -1,4 +1,4 @@
-module github.com/olliefr/docker-gs-ping
+module github.com/berndinox/docker-firehol-mikrotik
 
 go 1.16
 
