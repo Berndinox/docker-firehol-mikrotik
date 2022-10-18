@@ -61,7 +61,7 @@ func TestRespondsWithLove(t *testing.T) {
 	require.Contains(t, string(body), "<3", "does not respond with love?")
 }
 
-// Requirement 2: The application must include a health-check end-point at /ping,
+// Requirement 2: The application must include a health-check end-point at /healthz,
 // responding with JSON document { "Status": "OK" } if everything is well.
 func TestHealthCheck(t *testing.T) {
 
@@ -78,7 +78,7 @@ func TestHealthCheck(t *testing.T) {
 	var resp *http.Response
 
 	err = pool.Retry(func() error {
-		resp, err = http.Get(fmt.Sprint("http://localhost:", resource.GetPort("8080/tcp"), "/ping"))
+		resp, err = http.Get(fmt.Sprint("http://localhost:", resource.GetPort("8080/tcp"), "/healthz"))
 		if err != nil {
 			t.Log("container not ready, waiting...")
 			return err
