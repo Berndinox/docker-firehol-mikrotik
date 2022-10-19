@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"io"
+  "bufio"
 )
 
 
@@ -23,9 +24,9 @@ func main() {
 		httpPort = "8080"
 	}
 
-	writeIndex()
 	downloadFile("/tmp/ip", ipListUrl)
-	
+	linByLine("/tmp/ip")
+
 	fs := http.FileServer(http.Dir("/tmp/"))
 	http.Handle("/", http.StripPrefix("/", fs))
 
@@ -35,23 +36,9 @@ func main() {
 	} else {
 		fmt.Println("Webserver running on: http://localhost:" + httpPort)
 	}
-
-
-}
-
-func writeIndex() {
-    val := "Docker FireHOL Mikrotik"
-    data := []byte(val)
-
-    err := ioutil.WriteFile("/tmp/index.html", data, 0)
-	if err != nil {
-		fmt.Println("Index not created")
-	}
-    fmt.Println("Index created")
 }
 
 func downloadFile(filepath string, url string) (err error) {
-
   // Create the file
   out, err := os.Create(filepath)
   if err != nil  {
@@ -80,4 +67,24 @@ func downloadFile(filepath string, url string) (err error) {
   fmt.Println("IPs downloaded")
 
   return nil
+}
+
+function linByLine(filepath string) (err error) {
+  file, err := os.Open(filepath)
+  if err != nil {
+          panic(err)
+  }
+  defer file.Close()
+
+  reader := bufio.NewReader(file)
+
+  for {
+          line, _, err := reader.ReadLine()
+
+          if err == io.EOF {
+                  break
+          }
+
+          fmt.Printf("%s \n", line)
+  }
 }

@@ -23,6 +23,7 @@ FROM gcr.io/distroless/base-debian10
 WORKDIR /
 
 COPY --from=build /docker-firehol-mikrotik /docker-firehol-mikrotik
+COPY index.html /tmp/
 
 EXPOSE 8080
 
