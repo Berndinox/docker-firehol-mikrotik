@@ -69,6 +69,12 @@ func downloadFile(filepath string, url string) (err error) {
   return nil
 }
 
+func RemoveIndex(s []int, index int) []int {
+  ret := make([]int, 0)
+  ret = append(ret, s[:index]...)
+  return append(ret, s[index+1:]...)
+}
+
 func updateFile(filepath string, outputFile string) {
   input, err := ioutil.ReadFile(filepath)
   if err != nil {
@@ -76,12 +82,16 @@ func updateFile(filepath string, outputFile string) {
   }
 
   lines := strings.Split(string(input), "\n")
-
+  
+  newLength := 0
   for i, line := range lines {
-          if strings.Contains(line, "#") {
-                  lines[i] = ""
+          if !(strings.Contains(line, "#")) {
+            lines[newLength] = lines[i]
+            newLength++
           }
   }
+  lines = lines[:newLength]
+
   output := strings.Join(lines, "\n")
   err = ioutil.WriteFile(outputFile, []byte(output), 0644)
   if err != nil {
