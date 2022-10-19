@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"os"
 	"fmt"
-	"io/ioutil"
 	"io"
   "bufio"
 )
@@ -25,7 +24,7 @@ func main() {
 	}
 
 	downloadFile("/tmp/ip", ipListUrl)
-	linByLine("/tmp/ip")
+	readLine("/tmp/ip")
 
 	fs := http.FileServer(http.Dir("/tmp/"))
 	http.Handle("/", http.StripPrefix("/", fs))
@@ -69,22 +68,26 @@ func downloadFile(filepath string, url string) (err error) {
   return nil
 }
 
-function linByLine(filepath string) (err error) {
-  file, err := os.Open(filepath)
+func readLine(filename string) {
+  f, err := os.Open(filename)
   if err != nil {
-          panic(err)
+      fmt.Println(err)
+      return
   }
-  defer file.Close()
-
-  reader := bufio.NewReader(file)
-
-  for {
-          line, _, err := reader.ReadLine()
-
-          if err == io.EOF {
-                  break
-          }
-
-          fmt.Printf("%s \n", line)
+  defer f.Close()
+  r := bufio.NewReaderSize(f, 4*1024)
+  line, isPrefix, err := r.ReadLine()
+  for err == nil && !isPrefix {
+      s := string(line)
+      fmt.Println(s)
+      line, isPrefix, err = r.ReadLine()
+  }
+  if isPrefix {
+      fmt.Println("buffer size to small")
+      return
+  }
+  if err != io.EOF {
+      fmt.Println(err)
+      return
   }
 }
