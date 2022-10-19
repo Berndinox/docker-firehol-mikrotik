@@ -7,8 +7,22 @@ import (
 	"io"
   "io/ioutil"
   "strings"
+  "time"
+
+  "github.com/go-co-op/gocron"
 )
 
+
+func runCronJobs(ipListUrl string) {
+  s := gocron.NewScheduler(time.UTC)
+ 
+  s.Every(10).Seconds().Do(func() {
+    downloadFile("/tmp/ip", ipListUrl)
+    updateFile("/tmp/ip", "/tmp/ip.rsc")
+  })
+ 
+  s.StartBlocking()
+ }
 
 func main() {
 
@@ -24,18 +38,19 @@ func main() {
 		httpPort = "8080"
 	}
 
-	downloadFile("/tmp/ip", ipListUrl)
-	updateFile("/tmp/ip", "/tmp/ip.rsc")
+  downloadFile("/tmp/ip", ipListUrl)
+  updateFile("/tmp/ip", "/tmp/ip.rsc")
 
-	fs := http.FileServer(http.Dir("/tmp/"))
-	http.Handle("/", http.StripPrefix("/", fs))
+  fs := http.FileServer(http.Dir("/tmp/"))
+  http.Handle("/", http.StripPrefix("/", fs))
 
-	err := http.ListenAndServe(":" + httpPort, nil)
-	if err != nil {
-		fmt.Errorf("Webserver startfailed")
-	} else {
-		fmt.Println("Webserver running on: http://localhost:" + httpPort)
-	}
+  err := http.ListenAndServe(":" + httpPort, nil)
+  if err != nil {
+    fmt.Errorf("Webserver start failed")
+  }
+
+  runCronJobs(ipListUrl)
+
 }
 
 func downloadFile(filepath string, url string) (err error) {
@@ -69,11 +84,6 @@ func downloadFile(filepath string, url string) (err error) {
   return nil
 }
 
-func RemoveIndex(s []int, index int) []int {
-  ret := make([]int, 0)
-  ret = append(ret, s[:index]...)
-  return append(ret, s[index+1:]...)
-}
 
 func updateFile(filepath string, outputFile string) {
   input, err := ioutil.ReadFile(filepath)
@@ -91,10 +101,22 @@ func updateFile(filepath string, outputFile string) {
           }
   }
   lines = lines[:newLength]
-
+  
+  for i, line := range lines {
+    if strings.Contains(line, ".") {
+      lines[i] = "add list=firehol-blacklist address=" + lines[i]
+    }
+  }
+  currentTime := time.Now()
   output := strings.Join(lines, "\n")
+  output = "/ip firewall address-list\n" + output
+  output = "# Generated on: " + currentTime.Format("2006.01.02 15:04:05") +"\n" + output
   err = ioutil.WriteFile(outputFile, []byte(output), 0644)
   if err != nil {
     fmt.Errorf("ERROR")
   }
+
+  fmt.Println("IP.rsc created")
 }
+
+
