@@ -5,7 +5,8 @@ import (
 	"os"
 	"fmt"
 	"io"
-  "bufio"
+  "io/ioutil"
+  "strings"
 )
 
 
@@ -24,7 +25,7 @@ func main() {
 	}
 
 	downloadFile("/tmp/ip", ipListUrl)
-	readLine("/tmp/ip")
+	updateFile("/tmp/ip", "/tmp/ip.rsc")
 
 	fs := http.FileServer(http.Dir("/tmp/"))
 	http.Handle("/", http.StripPrefix("/", fs))
@@ -68,26 +69,22 @@ func downloadFile(filepath string, url string) (err error) {
   return nil
 }
 
-func readLine(filename string) {
-  f, err := os.Open(filename)
+func updateFile(filepath string, outputFile string) {
+  input, err := ioutil.ReadFile(filepath)
   if err != nil {
-      fmt.Println(err)
-      return
+    fmt.Errorf("ERROR")
   }
-  defer f.Close()
-  r := bufio.NewReaderSize(f, 4*1024)
-  line, isPrefix, err := r.ReadLine()
-  for err == nil && !isPrefix {
-      s := string(line)
-      fmt.Println(s)
-      line, isPrefix, err = r.ReadLine()
+
+  lines := strings.Split(string(input), "\n")
+
+  for i, line := range lines {
+          if strings.Contains(line, "#") {
+                  lines[i] = ""
+          }
   }
-  if isPrefix {
-      fmt.Println("buffer size to small")
-      return
-  }
-  if err != io.EOF {
-      fmt.Println(err)
-      return
+  output := strings.Join(lines, "\n")
+  err = ioutil.WriteFile(outputFile, []byte(output), 0644)
+  if err != nil {
+    fmt.Errorf("ERROR")
   }
 }
