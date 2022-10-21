@@ -8,40 +8,61 @@ import (
   "io/ioutil"
   "strings"
   "time"
-
-  "github.com/go-co-op/gocron"
 )
 
+// Static Vars
+var webroot = "/tmp/"
+var rawIPFile = webroot + "ip"
+var modIPFile = webroot + "ip.rsc"
+var refreshInt int = 30
 
-func runCronJobs(ipListUrl string) {
-  s := gocron.NewScheduler(time.UTC)
- 
-  s.Every(10).Seconds().Do(func() {
-    downloadFile("/tmp/ip", ipListUrl)
-    updateFile("/tmp/ip", "/tmp/ip.rsc")
-  })
- 
-  s.StartBlocking()
- }
+// Get Settings from ENV
+var ipListUrl = os.Getenv("IP_LIST_URL")
+// TODO: GetENV for INT is fuck* broken
+// var refreshInt = os.Getenv("IP_REFRESH_INTERVAL")
+var httpPort = os.Getenv("HTTP_PORT")
 
+// Scheduler for IP Liste create & update
+func schedule(f func(), interval time.Duration) *time.Ticker {
+  ticker := time.NewTicker(interval)
+  go func() {
+      for range ticker.C {
+          f()
+      }
+  }()
+  return ticker
+}
+
+// Main
 func main() {
 
-	// IP List to Block
-	ipListUrl := os.Getenv("IP_LIST_URL")
+	// IP List to load default
 	if ipListUrl == "" {
-        ipListUrl = "https://iplists.firehol.org/files/firehol_level1.netset"
-    }
+    ipListUrl = "https://iplists.firehol.org/files/firehol_level1.netset"
+  }
+
+  // Refresh Intervall in s default (30)
+  // Not Needed until GETENV is fixed
+  // if refreshInt == "" {
+  //   refreshInt = 30
+  // }
 
 	// Port the Service should listen to default 8080
-	httpPort := os.Getenv("HTTP_PORT")
 	if httpPort == "" {
 		httpPort = "8080"
 	}
+  
+  // Create Timespan for Schedule
+  refreshTime := time.Second*time.Duration(refreshInt)
 
-  downloadFile("/tmp/ip", ipListUrl)
-  updateFile("/tmp/ip", "/tmp/ip.rsc")
+  // Initial get and modifie the list
+  createFiles()
 
-  fs := http.FileServer(http.Dir("/tmp/"))
+  // Schedule the Job
+  schedule(createFiles, refreshTime)
+
+  // Init Web-Fileserver
+  fs := http.FileServer(http.Dir(webroot))
   http.Handle("/", http.StripPrefix("/", fs))
 
   err := http.ListenAndServe(":" + httpPort, nil)
@@ -49,10 +70,15 @@ func main() {
     fmt.Errorf("Webserver start failed")
   }
 
-  runCronJobs(ipListUrl)
-
 }
 
+// Call download & modify Function
+func createFiles() {
+  downloadFile(rawIPFile, ipListUrl)
+  updateFile(rawIPFile, modIPFile)
+}
+
+// Download IP-List file
 func downloadFile(filepath string, url string) (err error) {
   // Create the file
   out, err := os.Create(filepath)
@@ -84,7 +110,7 @@ func downloadFile(filepath string, url string) (err error) {
   return nil
 }
 
-
+// modify the File for Mikrotik (.rsc)
 func updateFile(filepath string, outputFile string) {
   input, err := ioutil.ReadFile(filepath)
   if err != nil {
@@ -118,5 +144,3 @@ func updateFile(filepath string, outputFile string) {
 
   fmt.Println("IP.rsc created")
 }
-
-
