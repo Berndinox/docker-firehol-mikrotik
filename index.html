@@ -10,7 +10,24 @@
   </head>
   <body>
     <main>
-        <h1>Welcome to the Web-UI of "Docker FireHOL Mikrotik"</h1> 
+        <h1>Welcome to the Web-UI of "Docker FireHOL Mikrotik"</h1><br />
+        <p>
+          Execute on the Mikrotik to add the Blocklist:
+        </p>
+        <code>
+        /system script<br>
+          add name="firehol-ip-blocklist-dl" source={/tool fetch url="REPLACEip.rsc" mode=https}<br>
+          add name="firehol-ip-blocklist-rp" source {/ip firewall address-list remove [find where list="firehol-blacklist"]; /import file-name=ip.rsc}<br>
+        /system scheduler<br>
+          add interval=1d name="firehol-ip-blocklist-task-dl" start-date=Jan/01/2022 start-time=00:05:00 on-event=firehol-ip-blocklist-dl<br>
+          add interval=1d name="firehol-ip-blocklist-task-rp" start-date=Jan/01/20022start-time=00:10:00 on-event=firehol-ip-blocklist-rp<br>
+        /ip firewall filter add chain=input action=drop connection-state=new src-address-list=firehol-blacklist<br>
+        </code>
+        <script>
+          document.body.innerHTML
+                = document.body.innerHTML
+                .replace("REPLACE", (window.location.href).replace("index.html",""))
+        </script>
     </main>
   </body>
 </html>

@@ -14,7 +14,7 @@ import (
 var webroot = "/tmp/"
 var rawIPFile = webroot + "ip"
 var modIPFile = webroot + "ip.rsc"
-var refreshInt int = 30
+var refreshInt int = 600
 
 // Get Settings from ENV
 var ipListUrl = os.Getenv("IP_LIST_URL")
